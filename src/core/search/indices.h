@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <absl/container/btree_set.h>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 
@@ -18,12 +17,12 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include <map>
+#include <absl/functional/function_ref.h>
+
 #include <memory>
 #include <optional>
 #include <vector>
 
-#include "absl/functional/function_ref.h"
 #include "base/pmr/memory_resource.h"
 #include "core/search/base.h"
 #include "core/search/block_list.h"

@@ -306,6 +306,13 @@ class ShardDocIndex {
       search::DocId id, const OpArgs& op_args, const search::Schema& schema,
       const std::optional<std::vector<FieldReference>>& return_fields);
 
+  ssize_t Defragment(PageUsage* page_usage, ssize_t quota) {
+    if (indices_) {
+      return indices_->Defragment(page_usage, quota);
+    }
+    return quota;
+  }
+
  private:
   // Clears internal data. Traverses all matching documents and assigns ids.
   void Rebuild(const OpArgs& op_args, PMR_NS::memory_resource* mr);
@@ -355,6 +362,9 @@ class ShardDocIndices {
 
   size_t GetUsedMemory() const;
   SearchStats GetStats() const;  // combines stats for all indices
+
+  ssize_t Defragment(PageUsage* page_usage, ssize_t quota);
+
  private:
   // Clean caches that might have data from this index
   void DropIndexCache(const dfly::ShardDocIndex& shard_doc_index);
@@ -362,6 +372,8 @@ class ShardDocIndices {
  private:
   MiMemoryResource local_mr_;
   absl::flat_hash_map<std::string, std::unique_ptr<ShardDocIndex>> indices_;
+
+  std::string next_defrag_index_;
 };
 
 }  // namespace dfly

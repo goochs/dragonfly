@@ -1,12 +1,8 @@
 #pragma once
 
-#include <absl/types/span.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <iterator>
-#include <optional>
-#include <type_traits>
 #include <vector>
 
 #include "core/search/base.h"

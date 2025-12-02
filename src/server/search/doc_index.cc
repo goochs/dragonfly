@@ -829,4 +829,26 @@ SearchStats ShardDocIndices::GetStats() const {
   return {GetUsedMemory(), indices_.size(), total_entries};
 }
 
+ssize_t ShardDocIndices::Defragment(PageUsage* page_usage, ssize_t quota) {
+  auto it = next_defrag_index_.empty() ? indices_.end() : indices_.find(next_defrag_index_);
+  if (it == indices_.end()) {
+    it = indices_.begin();
+  }
+
+  for (; it != indices_.end() && quota > 0; ++it) {
+    auto& [name, index] = *it;
+    quota = index->Defragment(page_usage, quota);
+    if (quota == 0) {
+      next_defrag_index_ = name;
+      break;
+    }
+  }
+
+  if (it == indices_.end()) {
+    next_defrag_index_.clear();
+  }
+
+  return quota;
+}
+
 }  // namespace dfly
