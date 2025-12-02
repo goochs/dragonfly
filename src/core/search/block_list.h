@@ -130,6 +130,8 @@ template <typename Container /* underlying container */> class BlockList {
     return BlockListIterator{blocks_.end(), blocks_.end()};
   }
 
+  ssize_t Defragment(PageUsage* page_usage, ssize_t quota);
+
  private:
   // Find block that should contain t. Returns end() only if empty
   BlockIt FindBlock(const ElementType& t);
@@ -196,6 +198,8 @@ template <typename T> class SortedVector {
   iterator end() const {
     return entries_.cend();
   }
+
+  ssize_t Defragment(PageUsage* page_usage, ssize_t quota);
 
  private:
   SortedVector(PMR_NS::vector<T>&& v) : entries_{std::move(v)} {

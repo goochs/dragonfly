@@ -14,6 +14,10 @@
 #include <string_view>
 #include <vector>
 
+namespace dfly {
+class PageUsage;
+}
+
 namespace dfly::search {
 
 using DocId = uint32_t;

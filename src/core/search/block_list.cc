@@ -1,5 +1,7 @@
 #include "core/search/block_list.h"
 
+#include "core/page_usage/page_usage_stats.h"
+
 namespace dfly::search {
 
 using namespace std;
@@ -108,6 +110,27 @@ template <typename C> bool BlockList<C>::Remove(ElementType t) {
   }
 
   return false;
+}
+
+template <typename Container>
+ssize_t BlockList<Container>::Defragment(PageUsage* page_usage, ssize_t quota) {
+  if (quota > 0 && page_usage->IsPageForObjectUnderUtilized(&blocks_)) {
+    --quota;
+    PMR_NS::vector<Container> new_blocks;
+    new_blocks.reserve(blocks_.size());
+    for (Container& block : blocks_) {
+      new_blocks.push_back(std::move(block));
+    }
+    blocks_ = std::move(new_blocks);
+  }
+
+  // TODO use something like void_t,supports_defragment_v to work with all SortedVectors
+  if constexpr (std::is_same_v<SortedVector<DocId>, Container>) {
+    for (Container& block : blocks_) {
+      quota = block.Defragment(page_usage, quota);
+    }
+  }
+  return quota;
 }
 
 template <typename C> typename BlockList<C>::BlockIt BlockList<C>::FindBlock(const ElementType& t) {
@@ -260,6 +283,19 @@ template <typename T> std::pair<SortedVector<T>, SortedVector<T>> SortedVector<T
   entries_.resize(entries_.size() / 2);
 
   return std::make_pair(std::move(*this), SortedVector<T>{std::move(tail)});
+}
+
+template <typename T> ssize_t SortedVector<T>::Defragment(PageUsage* page_usage, ssize_t quota) {
+  if (quota > 0 && page_usage->IsPageForObjectUnderUtilized(&entries_)) {
+    quota--;
+    PMR_NS::vector<T> new_entries;
+    new_entries.reserve(entries_.size());
+    for (auto&& e : entries_) {
+      new_entries.push_back(std::move(e));
+    }
+    entries_ = std::move(new_entries);
+  }
+  return quota;
 }
 
 template class SortedVector<DocId>;
