@@ -458,6 +458,41 @@ absl::flat_hash_set<std::string> TextIndex::Tokenize(std::string_view value) con
   return TokenizeWords(value, *stopwords_, synonyms_);
 }
 
+namespace {
+
+template <typename T>
+ssize_t DefragmentTree(RaxTreeMap<T>& rax, std::string* key, PageUsage* page_usage, ssize_t quota) {
+  auto it = key->empty() ? rax.begin() : rax.lower_bound(*key);
+  for (; it != rax.end() && quota > 0; ++it) {
+    quota = (*it).second.Defragment(page_usage, quota);
+    DCHECK_GE(quota, 0);
+    if (quota == 0) {
+      // The blocklist does not store position, so if the quota runs out, start at the same key on
+      // the next run.
+      *key = (*it).first;
+      break;
+    }
+  }
+
+  if (it == rax.end()) {
+    key->clear();
+  }
+
+  return quota;
+}
+
+}  // namespace
+
+ssize_t TagIndex::Defragment(PageUsage* page_usage, ssize_t quota) {
+  quota = DefragmentTree(entries_, &next_defrag_entry_, page_usage, quota);
+
+  if (suffix_trie_) {
+    quota = DefragmentTree(suffix_trie_.value(), &next_defrag_suffix_entry_, page_usage, quota);
+  }
+
+  return quota;
+}
+
 std::optional<DocumentAccessor::StringList> TagIndex::GetStrings(const DocumentAccessor& doc,
                                                                  std::string_view field) const {
   return doc.GetTags(field);

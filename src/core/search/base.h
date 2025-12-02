@@ -105,6 +105,11 @@ struct BaseIndex {
      Some indices may need to finalize internal structures. See RangeTree for example. */
   virtual void FinalizeInitialization() {
   }
+
+  // Defragments the index by moving objects in underutilized pages to the current malloc page.
+  virtual ssize_t Defragment(PageUsage* page_usage, ssize_t quota) {
+    return quota;
+  }
 };
 
 // Base class for type-specific sorting indices.

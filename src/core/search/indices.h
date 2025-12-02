@@ -148,6 +148,8 @@ struct TagIndex : public BaseStringIndex<SortedVector<DocId>> {
         separator_{params.separator} {
   }
 
+  ssize_t Defragment(PageUsage* page_usage, ssize_t quota) override;
+
  protected:
   std::optional<StringList> GetStrings(const DocumentAccessor& doc,
                                        std::string_view field) const override;
@@ -155,6 +157,8 @@ struct TagIndex : public BaseStringIndex<SortedVector<DocId>> {
 
  private:
   char separator_;
+  std::string next_defrag_entry_;
+  std::string next_defrag_suffix_entry_;
 };
 
 struct BaseVectorIndex : public BaseIndex {
