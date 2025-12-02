@@ -622,6 +622,39 @@ void FieldIndices::FinalizeInitialization() {
   }
 }
 
+namespace {
+
+template <typename T>
+ssize_t DefragmentIndices(T& indices, PageUsage* page_usage, ssize_t quota, std::string* key) {
+  auto it = key->empty() ? indices.end() : indices.find(*key);
+  if (it == indices.end()) {
+    it = indices.begin();
+  }
+
+  for (; it != indices.end() && quota > 0; ++it) {
+    auto& [field, index] = *it;
+    quota = index->Defragment(page_usage, quota);
+    if (quota == 0) {
+      *key = field;
+      break;
+    }
+  }
+
+  if (it == indices.end()) {
+    key->clear();
+  }
+
+  return quota;
+}
+
+}  // namespace
+
+ssize_t FieldIndices::Defragment(PageUsage* page_usage, ssize_t quota) {
+  quota = DefragmentIndices(indices_, page_usage, quota, &next_defrag_field_);
+  quota = DefragmentIndices(sort_indices_, page_usage, quota, &next_defrag_sort_field_);
+  return quota;
+}
+
 const Synonyms* FieldIndices::GetSynonyms() const {
   return synonyms_;
 }
